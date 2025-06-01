@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="de" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktive Hautanalyse</title>
+    <!-- Visualization & Content Choices: 
+        - Report Info: Differential Diagnoses (Rosazea, Seborrhoisches Ekzem, etc.). Goal: Compare likelihoods. Viz/Method: Horizontal Bar Chart (Chart.js/Canvas). Interaction: Clicking a bar reveals a detailed text description. Justification: Visually communicates the report's primary assessment (Rosazea is most likely) while still providing information on alternatives, making the diagnostic process transparent.
+        - Report Info: Long list of recommended active ingredients and their functions. Goal: Organize and explore. Viz/Method: Interactive Filterable Grid (HTML/CSS/JS). Interaction: Users can filter ingredients by their primary function (e.g., "Beruhigend", "Barrierestärkend") and click on any ingredient to see a detailed explanation. Justification: Transforms a static, overwhelming list into a powerful, user-driven exploration tool, promoting learning and understanding of product choices.
+        - Report Info: Home care routine. Goal: Inform and guide. Viz/Method: Structured HTML/CSS diagram with Unicode icons. Interaction: Static visual. Justification: Provides a clear, easy-to-follow visual guide for the daily routine, which is more effective and memorable than a text-only description.
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 700px; margin-left: auto; margin-right: auto; height: 250px; max-height: 300px; }
+        @media (min-width: 768px) { .chart-container { height: 300px; max-height: 350px; } }
+        .nav-link { transition: color 0.3s, border-color 0.3s; }
+        .active-nav-link { color: #0d9488; border-bottom-color: #0d9488; }
+        .ingredient-btn { transition: background-color 0.3s, color 0.3s, transform 0.2s; }
+        .ingredient-btn:hover { transform: translateY(-2px); }
+        .active-ingredient-btn { background-color: #0d9488; color: white; }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <header class="bg-stone-50/80 backdrop-blur-lg sticky top-0 z-50 border-b border-stone-200">
+        <nav class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <ul class="flex items-center justify-center sm:justify-start space-x-4 sm:space-x-8 h-16 overflow-x-auto whitespace-nowrap">
+                <li><a href="#overview" class="nav-link text-sm sm:text-base font-medium text-stone-600 hover:text-teal-600 border-b-2 border-transparent pb-1">Übersicht</a></li>
+                <li><a href="#analysis" class="nav-link text-sm sm:text-base font-medium text-stone-600 hover:text-teal-600 border-b-2 border-transparent pb-1">Analyse</a></li>
+                <li><a href="#diagnosis" class="nav-link text-sm sm:text-base font-medium text-stone-600 hover:text-teal-600 border-b-2 border-transparent pb-1">Diagnose</a></li>
+                <li><a href="#ingredients" class="nav-link text-sm sm:text-base font-medium text-stone-600 hover:text-teal-600 border-b-2 border-transparent pb-1">Wirkstoffe</a></li>
+                <li><a href="#plan" class="nav-link text-sm sm:text-base font-medium text-stone-600 hover:text-teal-600 border-b-2 border-transparent pb-1">Behandlungsplan</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <section id="overview" class="py-16 sm:py-24 text-center">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-teal-700 tracking-tight">Hautanalyse & Empfehlung</h1>
+            <p class="mt-4 max-w-3xl mx-auto text-lg sm:text-xl text-stone-600">Eine interaktive Zusammenfassung Ihrer dermatologischen Beurteilung.</p>
+            <div class="mt-12 bg-white p-8 rounded-xl shadow-sm border border-stone-200">
+                <h2 class="text-2xl font-semibold text-stone-800">Zentrale Beurteilung</h2>
+                <p class="mt-3 text-base text-stone-600">Basierend auf der visuellen Analyse des Hautzustandes liegt der Verdacht auf eine entzündliche Hauterkrankung nahe. Die Kombination der Symptome deutet am ehesten auf eine Form der Rosazea hin.</p>
+                <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-8 text-left">
+                    <div class="bg-amber-50 p-6 rounded-lg">
+                        <h3 class="font-bold text-amber-800">Hauptsymptome</h3>
+                        <ul class="mt-2 space-y-1 text-sm text-amber-700 list-disc list-inside">
+                            <li>Flächige Rötungen (Erythem)</li>
+                            <li>Entzündliche Knötchen (Papeln)</li>
+                            <li>Feine Schuppung</li>
+                            <li>Empfindliche, gereizte Haut</li>
+                        </ul>
+                    </div>
+                    <div class="bg-teal-50 p-6 rounded-lg">
+                        <h3 class="font-bold text-teal-800">Wahrscheinlichste Diagnose</h3>
+                        <p class="mt-2 text-sm text-teal-700"><strong>Rosazea, papulopustulöser Typ.</strong> Gekennzeichnet durch anhaltende Rötungen und entzündliche Läsionen ohne die für Akne typischen Mitesser.</p>
+                    </div>
+                    <div class="bg-stone-100 p-6 rounded-lg">
+                        <h3 class="font-bold text-stone-800">Wichtigster Grundsatz</h3>
+                        <p class="mt-2 text-sm text-stone-700"><strong>Beruhigung und Barrierestärkung.</strong> Die Behandlungsstrategie konzentriert sich auf die Reduktion von Entzündungen und den Wiederaufbau einer gesunden Hautbarriere.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="analysis" class="py-16 sm:py-24 border-t border-stone-200">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-stone-900">Analyse der Hautmerkmale</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">Detaillierte Beobachtungen zu den sichtbaren Hautveränderungen.</p>
+            </div>
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                    <h3 class="font-semibold text-lg text-stone-800">Unreinheiten & Effloreszenzen</h3>
+                    <p class="mt-2 text-sm text-stone-600">Es sind primär entzündlich gerötete <strong>Papeln (Knötchen)</strong> sichtbar, nicht klassische Mitesser. Dies ist ein Schlüsselmerkmal. Vereinzelt könnten <strong>Pusteln (Eiterbläschen)</strong> vorhanden sein. An den Rändern der Läsionen zeigt sich eine feine, trockene <strong>Schuppung (Squama)</strong>.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                    <h3 class="font-semibold text-lg text-stone-800">Gefässe & Sonstige Merkmale</h3>
+                    <p class="mt-2 text-sm text-stone-600">Eine deutliche, flächige <strong>Rötung (Erythem)</strong> dominiert das Bild, was auf eine erweiterte Durchblutung und vaskuläre Beteiligung hindeutet. Die Hauttextur wirkt insgesamt unruhig, trocken und empfindlich, was auf eine <strong>gestörte Hautbarriere</strong> schließen lässt.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="diagnosis" class="py-16 sm:py-24 border-t border-stone-200">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-stone-900">Mögliche Diagnosen im Vergleich</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">Die Symptome deuten stark auf Rosazea hin, aber andere Erkrankungen wurden als unwahrscheinlicher in Betracht gezogen. Klicken Sie auf einen Balken für mehr Details.</p>
+            </div>
+            <div class="mt-12 flex flex-col lg:flex-row items-center gap-8">
+                <div class="w-full lg:w-1/2">
+                    <div class="chart-container">
+                        <canvas id="diagnosisChart"></canvas>
+                    </div>
+                </div>
+                <div id="diagnosis-info" class="w-full lg:w-1/2 bg-white p-8 rounded-lg shadow-sm border border-stone-200 min-h-[250px]">
+                    <h3 id="diagnosis-title" class="font-bold text-xl text-stone-800">Diagnose-Information</h3>
+                    <p id="diagnosis-text" class="mt-2 text-stone-600">Bitte klicken Sie auf einen Balken im Diagramm, um eine detaillierte Beschreibung der jeweiligen Differentialdiagnose zu sehen.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="ingredients" class="py-16 sm:py-24 border-t border-stone-200">
+            <div class="text-center">
+                 <h2 class="text-3xl font-bold tracking-tight text-stone-900">Interaktiver Wirkstoff-Guide</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">Entdecken Sie empfohlene Wirkstoffe für Ihre Haut. Filtern Sie nach Wirkung und klicken Sie auf einen Wirkstoff, um Details zu erfahren.</p>
+            </div>
+            <div class="mt-8">
+                <div id="ingredient-filters" class="flex flex-wrap justify-center gap-2 mb-8">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                <div>
+                    <div id="ingredient-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    </div>
+                </div>
+                <div id="ingredient-details" class="bg-white p-8 rounded-lg shadow-sm border border-stone-200 min-h-[300px] sticky top-24">
+                    <h3 id="ingredient-name" class="font-bold text-xl text-stone-800">Wirkstoff-Details</h3>
+                    <p id="ingredient-description" class="mt-2 text-stone-600">Bitte wählen Sie einen Wirkstoff aus der Liste aus, um dessen Hauptwirkungen und Relevanz für Ihren Hautzustand anzuzeigen.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="plan" class="py-16 sm:py-24 border-t border-stone-200">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-stone-900">Ihr Behandlungsplan</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">Empfehlungen für die tägliche Heimpflege und professionelle Behandlungsoptionen.</p>
+            </div>
+            <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="bg-white p-8 rounded-lg shadow-sm border border-stone-200">
+                    <h3 class="text-xl font-semibold text-center mb-6">Empfohlene Heimpflege-Routine</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="font-bold text-lg mb-4 text-center text-amber-700">Morgens ☀️</h4>
+                            <ul class="space-y-4">
+                                <li class="flex items-start">
+                                    <span class="text-teal-600 font-bold text-xl mr-4">1.</span>
+                                    <div><strong class="block">Sanfte Reinigung</strong>Nur mit Wasser oder mildem Reiniger.</div>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-teal-600 font-bold text-xl mr-4">2.</span>
+                                    <div><strong class="block">Beruhigendes Serum</strong>Optional, z.B. mit Niacinamid.</div>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-teal-600 font-bold text-xl mr-4">3.</span>
+                                    <div><strong class="block">Feuchtigkeitspflege</strong>Barriere-stärkende Creme.</div>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-teal-600 font-bold text-xl mr-4">4.</span>
+                                    <div><strong class="block">Sonnenschutz LSF 50+</strong>Täglich und unerlässlich!</div>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg mb-4 text-center text-indigo-700">Abends 🌙</h4>
+                            <ul class="space-y-4">
+                                <li class="flex items-start">
+                                    <span class="text-teal-600 font-bold text-xl mr-4">1.</span>
+                                    <div><strong class="block">Gründliche Reinigung</strong>Make-up & LSF entfernen.</div>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-teal-600 font-bold text-xl mr-4">2.</span>
+                                    <div><strong class="block">Medizinische Behandlung</strong>Falls ärztlich verordnet.</div>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-teal-600 font-bold text-xl mr-4">3.</span>
+                                    <div><strong class="block">Regenerierendes Serum</strong>Optional, beruhigend.</div>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-teal-600 font-bold text-xl mr-4">4.</span>
+                                    <div><strong class="block">Feuchtigkeitspflege</strong>Ggf. reichhaltiger als morgens.</div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-lg shadow-sm border border-stone-200">
+                    <h3 class="text-xl font-semibold text-center mb-6">Wichtige Hinweise & Trigger</h3>
+                     <div class="space-y-4">
+                        <div>
+                            <h4 class="font-bold text-stone-700">🚫 Zu Meiden (Kontraindikationen)</h4>
+                            <p class="text-sm text-stone-600 mt-1">Aggressive Peelings, Mikrodermabrasion, reizende Inhaltsstoffe wie Duftstoffe & Alkohol, starkes Rubbeln.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-stone-700">🔥 Mögliche Trigger-Faktoren</h4>
+                            <p class="text-sm text-stone-600 mt-1">UV-Strahlung, extreme Temperaturen, Stress, scharfe Speisen, Alkohol, ungeeignete Kosmetika.</p>
+                        </div>
+                         <div>
+                            <h4 class="font-bold text-stone-700">👩‍⚕️ Professionelle Optionen</h4>
+                            <p class="text-sm text-stone-600 mt-1">Topische Medikamente (z.B. Azelainsäure, Metronidazol), systemische Medikamente, Licht- & Lasertherapien. <strong>Eine ärztliche Konsultation ist unerlässlich.</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-stone-100 border-t border-stone-200 mt-16">
+        <div class="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center text-sm text-stone-500">
+            <p>Diese interaktive Anwendung dient der Veranschaulichung und Information. Sie ersetzt keine professionelle medizinische Diagnose oder Beratung durch einen Facharzt.</p>
+            <p class="mt-2">&copy; 2024 Digitale Hautanalyse</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const diagnosisData = {
+        labels: ['Rosazea', 'Seborrhoisches Ekzem', 'Kontaktdermatitis'],
+        probabilities: [85, 10, 5],
+        descriptions: {
+            'Rosazea': {
+                title: 'Rosazea (papulopustulöser Typ)',
+                text: 'Eine chronisch-entzündliche Erkrankung, die durch anhaltende Rötungen im Gesicht, Papeln und Pusteln gekennzeichnet ist. Typischerweise fehlen Komedonen (Mitesser), was sie von Akne unterscheidet. Die Haut ist oft sehr empfindlich und reagiert auf diverse Trigger wie Sonne, Stress oder bestimmte Lebensmittel.'
+            },
+            'Seborrhoisches Ekzem': {
+                title: 'Seborrhoisches Ekzem',
+                text: 'Eine ebenfalls chronisch-entzündliche Hauterkrankung, die sich durch Rötung und typischerweise gelblich-fettige Schuppung in talgdrüsenreichen Arealen (Gesicht, Kopfhaut) äußert. Juckreiz kann vorkommen. Die Schuppung im vorliegenden Fall wirkt aber eher trocken, was diese Diagnose weniger wahrscheinlich macht.'
+            },
+            'Kontaktdermatitis': {
+                title: 'Kontaktdermatitis',
+                text: 'Eine Hautreaktion auf äußere Substanzen, die entweder irritativ (durch Reizung) oder allergisch bedingt ist. Sie führt zu Rötung, Juckreiz, Schuppung und manchmal Bläschen. Eine genaue Abklärung der verwendeten Produkte und ein möglicher Allergietest wären zur Bestätigung oder zum Ausschluss nötig.'
+            }
+        }
+    };
+    
+    const ingredientsData = [
+        { name: 'Azelainsäure', category: ['Beruhigend', 'Aufhellend'], description: 'Wirkt stark entzündungshemmend, reduziert Rötungen, Papeln und Pusteln. Ideal bei Rosazea. Kann auch Hyperpigmentierung mildern.' },
+        { name: 'Niacinamid', category: ['Beruhigend', 'Barrierestärkend'], description: 'Ein Allrounder: Stärkt die Hautbarriere, wirkt entzündungshemmend, reduziert Rötungen und reguliert die Talgproduktion. Sehr gut verträglich.' },
+        { name: 'Panthenol', category: ['Beruhigend', 'Feuchtigkeit'], description: 'Auch als Provitamin B5 bekannt. Wirkt stark hautberuhigend, feuchtigkeitsspendend und fördert die Wundheilung. Perfekt für gereizte Haut.' },
+        { name: 'Ceramide', category: ['Barrierestärkend'], description: 'Sind hauteigene Lipide und ein wesentlicher Bestandteil der Hautbarriere. Füllen Lipiddefizite auf und schützen vor Feuchtigkeitsverlust und Reizstoffen.' },
+        { name: 'Hyaluronsäure', category: ['Feuchtigkeit'], description: 'Ein starker Feuchtigkeitsbinder, der die Haut intensiv hydriert und aufpolstert. Hilft, Trockenheit und feine Schuppung zu reduzieren.' },
+        { name: 'Allantoin', category: ['Beruhigend', 'Feuchtigkeit'], description: 'Beruhigt Irritationen, fördert die Heilung und spendet Feuchtigkeit. Sehr gut für empfindliche, gestresste Haut geeignet.' },
+        { name: 'Bisabolol', category: ['Beruhigend'], description: 'Der Hauptwirkstoff der Kamille. Wirkt stark entzündungshemmend und hautberuhigend, ideal zur Linderung von Rötungen.' },
+        { name: 'Centella Asiatica', category: ['Beruhigend', 'Barrierestärkend'], description: 'Auch Tigergras genannt. Fördert die Wundheilung, wirkt entzündungshemmend und stärkt die Hautbarriere. Exzellent für geschädigte Haut.' },
+        { name: 'Süßholzwurzel', category: ['Beruhigend', 'Aufhellend'], description: 'Ein potenter Entzündungshemmer, der Rötungen effektiv reduziert. Hat zusätzlich aufhellende Eigenschaften.' },
+        { name: 'Glycerin', category: ['Feuchtigkeit'], description: 'Ein fundamentaler und sehr gut verträglicher Feuchtigkeitsspender, der die Hautbarriere unterstützt und vor Austrocknung schützt.' },
+        { name: 'Hafer-Extrakt', category: ['Beruhigend', 'Barrierestärkend'], description: 'Bekannt für seine juckreizlindernden und stark beruhigenden Eigenschaften. Ideal für gereizte, entzündete Hautzustände.' },
+        { name: 'Squalan', category: ['Barrierestärkend', 'Feuchtigkeit'], description: 'Ein leichtes, nicht fettendes Öl, das dem hauteigenen Sebum ähnelt. Schützt vor Feuchtigkeitsverlust und macht die Haut geschmeidig.' }
+    ];
+
+    const diagnosisInfoTitle = document.getElementById('diagnosis-title');
+    const diagnosisInfoText = document.getElementById('diagnosis-text');
+    const ctx = document.getElementById('diagnosisChart').getContext('2d');
+    
+    let diagnosisChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: diagnosisData.labels,
+            datasets: [{
+                label: 'Wahrscheinlichkeit (%)',
+                data: diagnosisData.probabilities,
+                backgroundColor: [
+                    'rgba(13, 148, 136, 0.6)',
+                    'rgba(245, 158, 11, 0.6)',
+                    'rgba(107, 114, 128, 0.6)'
+                ],
+                borderColor: [
+                    'rgba(13, 148, 136, 1)',
+                    'rgba(245, 158, 11, 1)',
+                    'rgba(107, 114, 128, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + "%"
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.raw + '%';
+                        }
+                    }
+                }
+            },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const index = elements[0].index;
+                    const label = diagnosisData.labels[index];
+                    const info = diagnosisData.descriptions[label];
+                    diagnosisInfoTitle.textContent = info.title;
+                    diagnosisInfoText.textContent = info.text;
+                }
+            }
+        }
+    });
+
+    const ingredientGrid = document.getElementById('ingredient-grid');
+    const ingredientFiltersContainer = document.getElementById('ingredient-filters');
+    const ingredientNameEl = document.getElementById('ingredient-name');
+    const ingredientDescriptionEl = document.getElementById('ingredient-description');
+    let activeFilter = 'Alle';
+    let activeIngredientBtn = null;
+
+    const categories = ['Alle', ...new Set(ingredientsData.flatMap(i => i.category))];
+
+    function renderFilters() {
+        ingredientFiltersContainer.innerHTML = '';
+        categories.forEach(cat => {
+            const button = document.createElement('button');
+            button.textContent = cat;
+            button.className = `px-4 py-2 text-sm font-medium rounded-full border transition-colors ${activeFilter === cat ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-100'}`;
+            button.onclick = () => {
+                activeFilter = cat;
+                renderFilters();
+                renderIngredients();
+            };
+            ingredientFiltersContainer.appendChild(button);
+        });
+    }
+
+    function renderIngredients() {
+        ingredientGrid.innerHTML = '';
+        const filteredIngredients = activeFilter === 'Alle'
+            ? ingredientsData
+            : ingredientsData.filter(i => i.category.includes(activeFilter));
+
+        filteredIngredients.forEach(ingredient => {
+            const button = document.createElement('button');
+            button.textContent = ingredient.name;
+            button.className = 'ingredient-btn w-full text-left px-4 py-3 bg-stone-100 text-stone-700 rounded-lg hover:bg-teal-100';
+            button.onclick = () => {
+                ingredientNameEl.textContent = ingredient.name;
+                ingredientDescriptionEl.textContent = ingredient.description;
+                if(activeIngredientBtn) {
+                    activeIngredientBtn.classList.remove('active-ingredient-btn');
+                }
+                button.classList.add('active-ingredient-btn');
+                activeIngredientBtn = button;
+            };
+            ingredientGrid.appendChild(button);
+        });
+    }
+    
+    renderFilters();
+    renderIngredients();
+
+
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('section');
+
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.4
+    };
+
+    const observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(link => {
+            link.classList.remove('active-nav-link');
+            if (link.getAttribute('href').substring(1) === entry.target.id) {
+              link.classList.add('active-nav-link');
+            }
+          });
+        }
+      });
+    }, observerOptions);
+
+    sections.forEach(section => {
+      observer.observe(section);
+    });
+
+});
+</script>
+
+</body>
+</html>
